@@ -1,0 +1,182 @@
+{
+  "info": {
+    "name": "Rewards API",
+    "description": "NestJS Rewards API with MongoDB - Complete API collection for testing all endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Rewards",
+      "item": [
+        {
+          "name": "Get User Reward Points",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rewards/points/user123",
+              "host": ["{{baseUrl}}"],
+              "path": ["rewards", "points", "user123"]
+            },
+            "description": "Get total reward points for a specific user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rewards/transactions/user123?page=1&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["rewards", "transactions", "user123"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of items per page"
+                }
+              ]
+            },
+            "description": "Get paginated transactions for a specific user"
+          },
+          "response": []
+        },
+        {
+          "name": "Redeem Reward",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rewardType\": \"cashback\",\n  \"pointsToRedeem\": 1000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rewards/redeem/user123",
+              "host": ["{{baseUrl}}"],
+              "path": ["rewards", "redeem", "user123"]
+            },
+            "description": "Redeem reward points for a specific option"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Reward Options",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rewards/options",
+              "host": ["{{baseUrl}}"],
+              "path": ["rewards", "options"]
+            },
+            "description": "Get available reward options"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Points (Testing)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"points\": 100,\n  \"category\": \"shopping\",\n  \"amount\": 200\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rewards/add-points/user123",
+              "host": ["{{baseUrl}}"],
+              "path": ["rewards", "add-points", "user123"]
+            },
+            "description": "Add points to user account (for testing purposes)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Rewards management endpoints"
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Get Rewards Distribution",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/rewards-distribution",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "rewards-distribution"]
+            },
+            "description": "Get rewards distribution aggregated by category"
+          },
+          "response": []
+        }
+      ],
+      "description": "Analytics endpoints"
+    },
+    {
+      "name": "Documentation",
+      "item": [
+        {
+          "name": "Swagger Documentation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api",
+              "host": ["{{baseUrl}}"],
+              "path": ["api"]
+            },
+            "description": "Access Swagger API documentation"
+          },
+          "response": []
+        }
+      ],
+      "description": "Documentation endpoints"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+} 
