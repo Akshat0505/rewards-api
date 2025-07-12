@@ -6,6 +6,7 @@ import { Reward, RewardSchema } from '../../database/schemas/reward.schema';
 import { Transaction, TransactionSchema } from '../../database/schemas/transaction.schema';
 import { Redemption, RedemptionSchema } from '../../database/schemas/redemption.schema';
 import { User, UserSchema } from '../../database/schemas/user.schema';
+import { RewardsGateway } from './rewards.gateway';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { User, UserSchema } from '../../database/schemas/user.schema';
     ]),
   ],
   controllers: [RewardsController],
-  providers: [RewardsService],
+  providers: [RewardsService, RewardsGateway],
   exports: [RewardsService],
 })
 export class RewardsModule {} 

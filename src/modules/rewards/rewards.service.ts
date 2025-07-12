@@ -9,34 +9,47 @@ import { RedeemRewardDto } from '../../common/dto/redeem-reward.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { InsufficientPointsException } from '../../common/exceptions/insufficient-points.exception';
 import { UserNotFoundException } from '../../common/exceptions/user-not-found.exception';
+import { RewardsGateway } from './rewards.gateway';
+import Redis from 'ioredis';
 
 @Injectable()
 export class RewardsService {
+  private redisClient: Redis;
+
   constructor(
     @InjectModel(Reward.name) private rewardModel: Model<RewardDocument>,
     @InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>,
     @InjectModel(Redemption.name) private redemptionModel: Model<RedemptionDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-  ) {}
+    private readonly rewardsGateway: RewardsGateway,
+  ) {
+    this.redisClient = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+  }
 
   // Get user's current points balance + any multipliers
   async getRewardPoints(userId: string): Promise<{ totalPoints: number; multiplier: number }> {
+    // Try to get from cache first
+    const cached = await this.redisClient.get(`points:${userId}`);
+    if (cached) {
+      return JSON.parse(cached);
+    }
     const user = await this.userModel.findOne({ id: userId });
     if (!user) {
       throw new UserNotFoundException(userId);
     }
-
     const userRewards = await this.rewardModel.findOne({ userId });
     
     // TODO: Move this to a proper user roles system later
     // For now, check email for premium status
     const isPremium = user.email.includes('premium') || user.email.includes('vip');
     const pointMultiplier = isPremium ? 1.5 : 1;
-    
-    return {
+    const result = {
       totalPoints: userRewards ? userRewards.totalPoints : 0,
       multiplier: pointMultiplier,
     };
+    // Cache the result for 5 minutes
+    await this.redisClient.setex(`points:${userId}`, 300, JSON.stringify(result));
+    return result;
   }
 
   // Fetch user's transaction history with pagination
@@ -100,6 +113,11 @@ export class RewardsService {
     userReward.updatedAt = new Date();
 
     await userReward.save();
+
+    this.rewardsGateway.emitRewardRedeemed(userId, redemptionRecord);
+
+    // Invalidate cache
+    await this.redisClient.del(`points:${userId}`);
 
     return {
       message: 'Reward redeemed successfully',
@@ -189,6 +207,11 @@ export class RewardsService {
     userReward.updatedAt = new Date();
 
     await userReward.save();
+
+    this.rewardsGateway.emitPointsUpdated(userId, userReward.totalPoints);
+
+    // Invalidate cache
+    await this.redisClient.del(`points:${userId}`);
 
     return {
       message: 'Points added successfully',

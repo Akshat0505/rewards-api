@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rewards API WebSocket Test</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .events {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f8f9fa;
+        }
+        .event {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .points-event {
+            border-left-color: #28a745;
+            background-color: #d4edda;
+        }
+        .reward-event {
+            border-left-color: #ffc107;
+            background-color: #fff3cd;
+        }
+        .timestamp {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        .test-buttons {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎁 Rewards API WebSocket Test</h1>
+        
+        <div id="status" class="status disconnected">
+            🔌 Connecting to WebSocket server...
+        </div>
+        
+        <h3>📡 Real-time Events:</h3>
+        <div id="events" class="events">
+            <div class="event">Waiting for events...</div>
+        </div>
+        
+        <div class="test-buttons">
+            <h3>🧪 Test Actions:</h3>
+            <button onclick="addPoints()">Add Points (50)</button>
+            <button onclick="redeemReward()">Redeem Reward (25 points)</button>
+            <button onclick="clearEvents()">Clear Events</button>
+        </div>
+    </div>
+
+    <script>
+        // Connect to WebSocket
+        const socket = io('http://localhost:3000/rewards', {
+            transports: ['websocket']
+        });
+
+        const statusDiv = document.getElementById('status');
+        const eventsDiv = document.getElementById('events');
+
+        // Connection events
+        socket.on('connect', () => {
+            statusDiv.className = 'status connected';
+            statusDiv.innerHTML = '✅ Connected to WebSocket server!';
+            addEvent('Connected to WebSocket server', 'connection');
+        });
+
+        socket.on('disconnect', () => {
+            statusDiv.className = 'status disconnected';
+            statusDiv.innerHTML = '❌ Disconnected from WebSocket server';
+            addEvent('Disconnected from WebSocket server', 'connection');
+        });
+
+        socket.on('connect_error', (error) => {
+            statusDiv.className = 'status disconnected';
+            statusDiv.innerHTML = '❌ Connection error: ' + error.message;
+            addEvent('Connection error: ' + error.message, 'error');
+        });
+
+        // Listen for points updates
+        socket.on('pointsUpdated', (data) => {
+            addEvent(`💰 Points Updated: User ${data.userId} now has ${data.totalPoints} points`, 'points');
+        });
+
+        // Listen for reward redemptions
+        socket.on('rewardRedeemed', (data) => {
+            addEvent(`🎁 Reward Redeemed: User ${data.userId} redeemed ${data.reward.pointsRedeemed} points for ${data.reward.rewardType}`, 'reward');
+        });
+
+        function addEvent(message, type) {
+            const eventDiv = document.createElement('div');
+            eventDiv.className = `event ${type}-event`;
+            eventDiv.innerHTML = `
+                <div>${message}</div>
+                <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+            `;
+            eventsDiv.appendChild(eventDiv);
+            eventsDiv.scrollTop = eventsDiv.scrollHeight;
+        }
+
+        function addPoints() {
+            fetch('http://localhost:3000/rewards/add-points/user123', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    points: 50,
+                    category: 'web-test',
+                    amount: 25
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                addEvent(`📤 API Call: Added ${data.transaction.pointsEarned} points`, 'api');
+            })
+            .catch(error => {
+                addEvent(`❌ API Error: ${error.message}`, 'error');
+            });
+        }
+
+        function redeemReward() {
+            fetch('http://localhost:3000/rewards/redeem/user123', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    pointsToRedeem: 25,
+                    rewardType: 'voucher'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                addEvent(`📤 API Call: Redeemed ${data.redemption.pointsRedeemed} points for ${data.redemption.rewardType}`, 'api');
+            })
+            .catch(error => {
+                addEvent(`❌ API Error: ${error.message}`, 'error');
+            });
+        }
+
+        function clearEvents() {
+            eventsDiv.innerHTML = '<div class="event">Events cleared...</div>';
+        }
+    </script>
+</body>
+</html> 
